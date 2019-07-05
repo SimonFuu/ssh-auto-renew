@@ -151,7 +151,7 @@ def change_domain():
 
 def main():
     global config
-    if not server_check():
+    if server_check():
         print("服务器链接正常============================")
     else:
         print("服务器链接失败，准备重新创建服务器============================")
