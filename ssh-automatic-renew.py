@@ -88,7 +88,7 @@ def main():
 if __name__ == "__main__":
     global config
     config = {
-        'server': 'ss.la.vultr.simonfo.com',
+        'server': '',
         'port': 10704,
         'aliyun-access-key-id': 'LTAI4fDTYrKtHf6U',
         'aliyun-access-key-secret': 'osEia99g9MI1sVikA73N4bjVWmsW50',
