@@ -98,6 +98,15 @@ def server_configuration(server):
     stdout.read()
     stdin, stdout, stderr = ssh.exec_command('systemctl enable supervisord')
     stdout.read()
+    stdin, stdout, stderr = ssh.exec_command('systemctl start firewalld && systemctl enable firewalld')
+    stdout.read()
+    print('开始配置Firewall')
+    stdin, stdout, stderr = ssh.exec_command(
+        'firewall-cmd --zone=public --add-port=22/tcp --permanent && '
+        'firewall-cmd --zone=public --add-port=' + str(config.get('server', 'port')) + '/tcp --permanent && '
+        'firewall-cmd --reload'
+    )
+    stdout.read()
     print('安装完成，准备上传所需文件')
 
     # 开始上传功能
@@ -131,8 +140,9 @@ def server_configuration(server):
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print("尝试连接服务器 %s，用户名 %s，密码 %s" % (server['ip'], server['username'], server['password']))
     ssh.connect(server['ip'], username=server['username'], password=server['password'])
-    stdin, stdout, stderr = ssh.exec_command('netstat -nlt | grep 10704')
+    stdin, stdout, stderr = ssh.exec_command('netstat -nlt | grep ' + str(config.get('server', 'port')))
     out = stdout.read()
     ssh.close()
     if len(str(out, encoding="utf-8")) > 0:
@@ -200,7 +210,7 @@ def main():
         if not server_configuration(new_server):
             print('服务器配置失败，请登录服务器进行查看')
             exit(0)
-        print('服务器配置成功，服务器地址: %s, ssh端口：10704' % new_server['ip'])
+        print("服务器配置成功，服务器地址: %s, ssh端口：%s" % (new_server['ip'], str(config.get('server', 'port'))))
         # 3、关闭旧的服务器
         destroy_servers(new_server['delete_servers'])
         # 4、解析调整
