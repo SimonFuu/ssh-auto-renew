@@ -221,7 +221,7 @@ def main():
 
 if __name__ == "__main__":
     config = configparser.ConfigParser(allow_no_value=False)
-    config.read("config.cfg")
+    config.read("./config.cfg")
     if config.get('vultr', 'api-key') == '' or config.get('aliyun', 'access-key-id') == '' or config.get('aliyun', 'access-key-secret') == '':
         print('配置信息不完整，请提供配置信息')
         exit(0)
