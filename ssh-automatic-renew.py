@@ -23,7 +23,7 @@ from vultr import Vultr
 def server_check():
     global config
     sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sk.settimeout(1)
+    sk.settimeout(5)
     try:
         sk.connect((config.get('server', 'sub_domain'), int(config.get('server', 'port'))))
         res = True
