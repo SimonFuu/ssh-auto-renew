@@ -10,6 +10,11 @@ import socket
 import time
 import paramiko as paramiko
 import configparser
+
+from aliyunsdkcore.client import AcsClient
+from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
+from aliyunsdkalidns.request.v20150109.AddDomainRecordRequest import AddDomainRecordRequest
+from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
 from vultr import Vultr
 
 
@@ -18,7 +23,7 @@ def server_check():
     sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sk.settimeout(1)
     try:
-        sk.connect((config.get('server', 'domain'), int(config.get('server', 'port'))))
+        sk.connect((config.get('server', 'sub_domain'), int(config.get('server', 'port'))))
         res = True
     except Exception as e:
         print(e)
@@ -145,8 +150,39 @@ def destroy_servers(server_ids):
         vultr.server.destroy(id)
 
 
-def change_domain():
-    pass
+def change_domain(ip):
+    global config
+    aliyun_id = config.get('aliyun', 'access-key-id')
+    aliyun_secret = config.get('aliyun', 'access-key-secret')
+    client = AcsClient(aliyun_id, aliyun_secret, 'cn-hangzhou')
+    request = DescribeDomainRecordsRequest()
+    request.set_accept_format('json')
+    request.set_DomainName('simonfo.com')
+    request.set_PageSize(500)
+    response = str(client.do_action_with_exception(request), encoding='utf-8')
+    response = json.loads(response)
+    sub = str(config.get('server', 'sub_domain')).replace('.' + str(config.get('server', 'domain')), '')
+    record_id = 0
+    for record in response['DomainRecords']['Record']:
+        if sub == record['RR']:
+            record_id = record['RecordId']
+    print(record_id)
+    if record_id == 0:
+        request = AddDomainRecordRequest()
+        request.set_accept_format('json')
+        request.set_Value(ip)
+        request.set_Type("A")
+        request.set_RR(sub)
+        request.set_DomainName(str(config.get('server', 'domain')))
+    else:
+        request = UpdateDomainRecordRequest()
+        request.set_accept_format('json')
+        request.set_RR(sub)
+        request.set_Value(ip)
+        request.set_Type("A")
+        request.set_RecordId(record_id)
+    response = client.do_action_with_exception(request)
+    print(str(response, encoding='utf-8'))
 
 
 def main():
@@ -168,25 +204,16 @@ def main():
         # 3、关闭旧的服务器
         destroy_servers(new_server['delete_servers'])
         # 4、解析调整
-        if config.get('aliyun', 'access-key-id') != '' and config.get('aliyun', 'access-key-id') != '':
-            print('开始配置阿里云域名解析')
-            change_domain()
-        else:
-            config.set('server', 'domain', new_server['ip'])
-            # 保存 config 文件
-            try:
-                with open("datatype.conf", "w+") as f:
-                    config.write(f)
-            except ImportError:
-                pass
-            print('阿里云信息未配置，退出')
+        print('开始配置阿里云域名解析')
+        change_domain(new_server['ip'])
+        print('阿里云信息未配置，退出')
 
 
 if __name__ == "__main__":
     config = configparser.ConfigParser(allow_no_value=False)
     config.read("config.cfg")
-    if config.get('vultr', 'api-key') == '':
-        print('请提供 Vultr API-KEY')
+    if config.get('vultr', 'api-key') == '' or config.get('aliyun', 'access-key-id') == '' or config.get('aliyun', 'access-key-secret') == '':
+        print('配置信息不完整，请提供配置信息')
         exit(0)
     main()
 
