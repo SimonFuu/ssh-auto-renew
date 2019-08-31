@@ -206,7 +206,7 @@ def main():
         # 4、解析调整
         print('开始配置阿里云域名解析')
         change_domain(new_server['ip'])
-        print('阿里云信息未配置，退出')
+        print('阿里云域名解析配置完成，程序退出')
 
 
 if __name__ == "__main__":
