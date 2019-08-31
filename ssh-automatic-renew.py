@@ -222,7 +222,7 @@ def main():
 
 
 if __name__ == "__main__":
-    config_file = os.path.abspath('.') + "/config.cfg"
+    config_file = os.path.split(os.path.realpath(__file__))[0] + "/config.cfg"
     if not os.path.exists(config_file):
         print('配置文件不存在，程序退出')
         exit(0)
