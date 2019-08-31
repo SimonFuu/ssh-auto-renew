@@ -6,7 +6,9 @@
 # Life is short, and world is wide.
 import datetime
 import json
+import os
 import socket
+import sys
 import time
 import paramiko as paramiko
 import configparser
@@ -220,9 +222,15 @@ def main():
 
 
 if __name__ == "__main__":
+    config_file = os.path.abspath('.') + "/config.cfg"
+    if not os.path.exists(config_file):
+        print('配置文件不存在，程序退出')
+        exit(0)
     config = configparser.ConfigParser(allow_no_value=False)
-    config.read("./config.cfg")
-    if config.get('vultr', 'api-key') == '' or config.get('aliyun', 'access-key-id') == '' or config.get('aliyun', 'access-key-secret') == '':
+    config.read(config_file)
+    if (config.get('vultr', 'api-key') == ''
+            or config.get('aliyun', 'access-key-id') == ''
+            or config.get('aliyun','access-key-secret') == ''):
         print('配置信息不完整，请提供配置信息')
         exit(0)
     main()
