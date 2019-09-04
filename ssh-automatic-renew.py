@@ -79,13 +79,14 @@ def renew_server():
 
 
 def server_configuration(server):
+    global path
     print('服务器创建成功，服务器信息如下: %s' % json.dumps(server))
     now = datetime.datetime.now()
     for i in range(0, 60):
         print("%s 秒后尝试链接服务器" % (60 - i))
         time.sleep(1)
 
-    paramiko.util.log_to_file("./%s-%s-ssh.log" % (now.strftime('%Y-%m-%d'), server['ip']))
+    paramiko.util.log_to_file("%s/%s-%s-ssh.log" % (path, now.strftime('%Y-%m-%d'), server['ip']))
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -117,16 +118,16 @@ def server_configuration(server):
     sftp = paramiko.SFTPClient.from_transport(t)
     print('准备上传bbr.sh')
     remote_path = '/root/bbr.sh'
-    local_path = './bbr.sh'
+    local_path = path + '/bbr.sh'
     sftp.put(local_path, remote_path)
 
     print('准备上传ssserver.ini')
     remote_path = '/etc/supervisord.d/ssserver.ini'
-    local_path = './ssserver.ini'
+    local_path = path + '/ssserver.ini'
     sftp.put(local_path, remote_path)
     print('准备上传shadowsocks.json')
     remote_path = '/etc/shadowsocks.json'
-    local_path = './shadowsocks.json'
+    local_path = path + '/shadowsocks.json'
     sftp.put(local_path, remote_path)
     t.close()
     print('文件上传完成，开始安装bbr')
@@ -222,7 +223,8 @@ def main():
 
 
 if __name__ == "__main__":
-    config_file = os.path.split(os.path.realpath(__file__))[0] + "/config.cfg"
+    path = os.path.split(os.path.realpath(__file__))[0]
+    config_file = path + "/config.cfg"
     if not os.path.exists(config_file):
         print('配置文件不存在，程序退出')
         exit(0)
